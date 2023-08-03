@@ -1,0 +1,142 @@
+{
+  "name": "anomalous_max_processing_time_for_tomcat_host",
+  "description": "This incident type typically refers to a situation where there is an anomaly in the Tomcat max processing time on a host. The maximum amount of time it takes for the server to process one request, from the time an available thread starts processing the request to the time it returns a response, has exceeded the expected threshold. This could indicate that a JSP page isn\u2019t loading or an associated process (such as a database query) is taking too long to complete.",
+  "params": [
+    {
+      "name": "DESIRED_MEMORY_THRESHOLD",
+      "value": ""
+    },
+    {
+      "name": "PID",
+      "value": ""
+    },
+    {
+      "name": "DATABASE_NAME",
+      "value": ""
+    },
+    {
+      "name": "DESIRED_NETWORK_THRESHOLD",
+      "value": ""
+    },
+    {
+      "name": "USERNAME",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Anomalous max processing time for Tomcat host\nThis incident type typically refers to a situation where there is an anomaly in the Tomcat max processing time on a host. The maximum amount of time it takes for the server to process one request, from the time an available thread starts processing the request to the time it returns a response, has exceeded the expected threshold. This could indicate that a JSP page isn\u2019t loading or an associated process (such as a database query) is taking too long to complete."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if the Tomcat service is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl status tomcat`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Tomcat access and error logs for any relevant messages"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_tail_logs()"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the CPU and memory usage of the server"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `top`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the network connections to the server"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `netstat -an`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current JVM settings"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `jcmd ${PID} VM.flags`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the database server for performance issues"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `psql -U ${USERNAME} -d ${DATABASE_NAME} -c \"SELECT * FROM pg_stat_activity;\"`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## The server may be experiencing a high load of requests, causing the Tomcat max processing time to spike."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_cpu_mem_net_usage_check($DESIRED_MEMORY_THRESHOLD, $DESIRED_NETWORK_THRESHOLD)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Increase the resources allocated to the Tomcat server, such as CPU, memory, or network bandwidth."
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_tomcat_mem_adjust()"
+    }
+  ]
+}
